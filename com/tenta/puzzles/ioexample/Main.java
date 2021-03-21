@@ -25,9 +25,11 @@ public class Main {
      * When we found first of it, we find numbers on the left and right side of it, and then do the Multiplication/Division.
      * After that we store the result on the place of those two numbers and do the process again until the final result
      * doesn't have just digits in the String.
+     * @return
      */
-    private static void doTheOperation(String function) {
+    public static String doTheOperation(String function) {
         // filter all emoji inputs
+        System.out.println(function);
         function = replaceAllEmojis(function);
         String finalResult;
         // Check if the result is just digits
@@ -65,7 +67,11 @@ public class Main {
         if (function != null) {
             finalResult = function;
             styleToEmoticon(finalResult);
+            return finalResult;
+        } else {
+            return null;
         }
+
     }
 
     //getting operator from the exact position
@@ -144,7 +150,7 @@ public class Main {
     }
 
     // output filtering
-    private static void styleToEmoticon(String finalResult) {
+    public static String styleToEmoticon(String finalResult) {
         finalResult = finalResult.replace("100", "\uD83D\uDCAF");
         finalResult = finalResult.replace("10", "\uD83D\uDD1F");
         finalResult = finalResult.replace("0", "0️");
@@ -158,6 +164,7 @@ public class Main {
         finalResult = finalResult.replace("8", "\uD83C\uDFB1");
         finalResult = finalResult.replace("9", "9️");
         System.out.println("\n" + finalResult);
+        return finalResult;
     }
 
     // Input filtering
