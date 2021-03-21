@@ -1,32 +1,131 @@
 package com.tenta.puzzles.ioexample;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.charset.Charset;
-import java.util.regex.Pattern;
 
 public class Main {
     static public void main(final String[] args) {
 
         System.out.println("Emoji calculator\n Please enter a function:");
+
+        final String wholeFunction;
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-            final String wholeFunction = reader.readLine();
+            wholeFunction = reader.readLine();
             reader.close();
             doTheOperation(wholeFunction);
-
-        } catch (Exception e) {
-            System.err.println(String.format("Error: %s", e.getMessage()));
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
         }
     }
 
-    private static String getSecondNumber(String wholeFunction) {
+    /**
+     * The main objective here is to find Multiplication and Division operators in the function.
+     * When we found first of it, we find numbers on the left and right side of it, and then do the Multiplication/Division.
+     * After that we store the result on the place of those two numbers and do the process again until the final result
+     * doesn't have just digits in the String.
+     */
+    private static void doTheOperation(String function) {
+        // filter all emoji inputs
+        function = replaceAllEmojis(function);
+        String finalResult;
+        // Check if the result is just digits
+        while (!function.matches("[0-9]+") && function.length() > 1) {
+            String firstNumber = getFirstNumber(function);
+            if (!firstNumber.matches("[0-9]+")) {
+                styleToEmoticon("\uD83E\uDD37");
+                function = null;
+                break;
+            }
+
+            char operator1 = getOperator(function);
+            String operator = String.valueOf(operator1);
+
+            String secondNumber = getSecondNumber(function);
+            if (secondNumber.equals("0") || !secondNumber.matches("[0-9]+")) {
+                styleToEmoticon("\uD83E\uDD37");
+                function = null;
+                break;
+            }
+            double num1 = Integer.parseInt(firstNumber);
+            double num2 = Integer.parseInt(secondNumber);
+            double result = 0;
+            switch (operator) {
+                case "+" -> result = num1 + num2;
+                case "-" -> result = num1 - num2;
+                case "*" -> result = num1 * num2;
+                case "/" -> result = num1 / num2;
+                case "%" -> result = num1 % num2;
+
+            }
+            function = function.replace(firstNumber + operator + secondNumber, String.valueOf((int) result));
+
+        }
+        if (function != null) {
+            finalResult = function;
+            styleToEmoticon(finalResult);
+        }
+    }
+
+    //getting operator from the exact position
+    private static char getOperator(String wholeFunction) {
+        return wholeFunction.charAt(getOperatorPosition(wholeFunction));
+    }
+
+
+    //get position of the operator to get first number on the left of it and the second of the right of it
+    private static int getOperatorPosition(String wholeFunction) {
+        for (int i = 0; i < wholeFunction.length(); i++) {
+            //priority over the addition and subtraction
+            if (wholeFunction.charAt(i) == '*' || wholeFunction.charAt(i) == '/' || wholeFunction.charAt(i) == '%') {
+                return i;
+            }
+        }
+        for (int i = 0; i < wholeFunction.length(); i++) {
+            if (wholeFunction.charAt(i) == '+' || wholeFunction.charAt(i) == '-') {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    //getting first number from function
+    private static String getFirstNumber(String wholeFunction) {
         int i = -1;
+        int br = 0;
         while (i == -1) {
             i = getOperatorPosition(wholeFunction);
+            br++;
+            if (br == wholeFunction.length() - 1) {
+                return "";
+            }
+        }
+        int index = 0;
+        String lastChar = wholeFunction.substring(0, i);
+        for (int j = lastChar.length() - 1; j > 0; j--) {
+            if (lastChar.charAt(j) == '+' || lastChar.charAt(j) == '-' || lastChar.charAt(j) == '*' || lastChar.charAt(j) == '/') {
+                index = j;
+                break;
+            }
+        }
+        String returnString = lastChar.substring(index);
+
+        returnString = returnString.replaceAll("[^a-zA-Z0-9_-]", "");
+
+        return returnString;
+    }
+
+    //getting second number from function
+    private static String getSecondNumber(String wholeFunction) {
+        int i = -1;
+        int br = 0;
+        while (i == -1) {
+            i = getOperatorPosition(wholeFunction);
+            br++;
+            if (br == wholeFunction.length() - 1) {
+                return "";
+            }
         }
 
         int index = 0;
@@ -44,86 +143,7 @@ public class Main {
         return returnString;
     }
 
-    private static char getOperator(String wholeFunction) {
-        return wholeFunction.charAt(getOperatorPosition(wholeFunction));
-    }
-
-    private static String getFirstNumber(String wholeFunction) {
-        int i = -1;
-        while (i == -1) {
-            i = getOperatorPosition(wholeFunction);
-        }
-        int index = 0;
-        String lastChar = wholeFunction.substring(0, i);
-        for (int j = lastChar.length() - 1; j > 0; j--) {
-            if (lastChar.charAt(j) == '+' || lastChar.charAt(j) == '-' || lastChar.charAt(j) == '*' || lastChar.charAt(j) == '/') {
-                index = j;
-                break;
-            }
-        }
-        String returnString = lastChar.substring(index);
-
-        returnString = returnString.replaceAll("[^a-zA-Z0-9_-]", "");
-
-        return returnString;
-    }
-
-    private static int getOperatorPosition(String wholeFunction) {
-        if (wholeFunction.indexOf('*') != -1) {
-            return wholeFunction.indexOf('*');
-        } else if (wholeFunction.indexOf('/') != -1) {
-            return wholeFunction.indexOf('/');
-        }else if (wholeFunction.indexOf('%') != -1) {
-            return wholeFunction.indexOf('%');
-        } else if (wholeFunction.indexOf('+') != -1) {
-            return wholeFunction.indexOf('+');
-        } else if (wholeFunction.indexOf('-') != -1) {
-            return wholeFunction.indexOf('-');
-        }
-        return -1;
-    }
-
-    private static void doTheOperation(String function) {
-
-        function = replaceAllEmoticonesToAscii(function);
-        String finalResult;
-        while (!function.matches("[0-9]+") && function.length() > 1) {
-            String firstNumber = getFirstNumber(function);
-            if (!firstNumber.matches("[0-9]+")){
-                styleToEmoticon("\uD83E\uDD37");
-                function = null;
-                break;
-            }
-
-            char operator1 = getOperator(function);
-            String operator = String.valueOf(operator1);
-
-            String secondNumber = getSecondNumber(function);
-            if (secondNumber.equals("0") || !secondNumber.matches("[0-9]+")){
-                styleToEmoticon("\uD83E\uDD37");
-                function = null;
-                break;
-            }
-            double num1 = Integer.parseInt(firstNumber);
-            double num2 = Integer.parseInt(secondNumber);
-            double result = 0;
-                switch (operator) {
-                    case "+" -> result = num1 + num2;
-                    case "-" -> result = num1 - num2;
-                    case "*" -> result = num1 * num2;
-                    case "/" -> result = num1 / num2;
-                    case "%" -> result = num1 % num2;
-
-                }
-            function = function.replace(firstNumber + operator + secondNumber, String.valueOf((int)result));
-
-        }
-        if (function !=null){
-            finalResult = function;
-            styleToEmoticon(finalResult);
-        }
-    }
-
+    // output filtering
     private static void styleToEmoticon(String finalResult) {
         finalResult = finalResult.replace("100", "\uD83D\uDCAF");
         finalResult = finalResult.replace("10", "\uD83D\uDD1F");
@@ -137,10 +157,11 @@ public class Main {
         finalResult = finalResult.replace("7", "7️");
         finalResult = finalResult.replace("8", "\uD83C\uDFB1");
         finalResult = finalResult.replace("9", "9️");
-        System.out.println("\n"+finalResult);
+        System.out.println("\n" + finalResult);
     }
 
-    private static String replaceAllEmoticonesToAscii(String function) {
+    // Input filtering
+    private static String replaceAllEmojis(String function) {
         function = function.replaceAll("\\s", "");
         function = function.replace("minus", "-");
         function = function.replace("➖", "-");
